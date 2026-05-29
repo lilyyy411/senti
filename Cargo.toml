@@ -1,0 +1,11 @@
+[package]
+name = "senti"
+version = "0.1.0"
+edition = "2024"
+authors = ["lilyyy411"]
+description = "Const-compatible, compile-time bounded, (mostly) sentinel-terminated arrays, bounded C-strings, and various assorted FFI utilities"
+license = "MIT"
+keywords = ["C", "array", "ffi", "sentinel", "string", "terminated"]
+
+[dependencies]
+bytemuck = "1.25.0"
