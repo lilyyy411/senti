@@ -79,7 +79,7 @@ impl<'buf, T> Buffer<'buf, T> {
 /// It is useful for keeping track of lifetimes when the data may not necessarily be
 /// meet the requirments of `&mut T`, eg., it may alias, point to partially uninitialized
 /// data or not be aligned.
-#[repr(transparen)]
+#[repr(transparent)]
 pub struct MutPtr<'a, T> {
     ptr: NonNull<T>,
     _lt: PhantomData<&'a MaybeUninit<UnsafeCell<T>>>,
