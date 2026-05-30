@@ -168,9 +168,9 @@ macro_rules! c_enum {
                 $variant $(= $value)?
             ),*
         }
-        impl TryFrom<std::ffi::c_int> for $name {
+        impl TryFrom<::std::ffi::c_int> for $name {
             type Error = $crate::ValidationError<Self>;
-            fn try_from(x: std::ffi::c_int) -> ::std::result::Result<Self, Self::Error> {
+            fn try_from(x: ::std::ffi::c_int) -> ::std::result::Result<Self, Self::Error> {
                 #![allow(non_upper_case_globals)]
             $(
                 const $variant: ::std::ffi::c_int = $name::$variant as _;
@@ -187,14 +187,14 @@ macro_rules! c_enum {
 
             #[inline(always)]
             #[track_caller]
-            unsafe fn convert_unchecked(x: std::ffi::c_int) -> Self {
+            unsafe fn convert_unchecked(x: ::std::ffi::c_int) -> Self {
                 if cfg!(debug_assertions) {
                     Self::try_from(x).expect("Invalid data passed to `get_unchecked`")
                 } else {
-                    unsafe { std::mem::transmute(x) }
+                    unsafe { ::std::mem::transmute(x) }
                 }
             }
-            fn into_value(self) -> c_int {
+            fn into_value(self) -> ::std::ffi::c_int {
                 self as _
             }
         }
