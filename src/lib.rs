@@ -4,7 +4,7 @@
 //! This crate contains random nonsense that I use for FFI-related code. Many of these types are meant to be used especially
 //! in hand-written FFI bindings to make ensuring safety easier.
 use std::{
-    any::{Any, type_name},
+    any::type_name,
     ffi::{c_char, c_int},
     fmt::{Debug, Display},
     hash::Hash,
@@ -102,6 +102,10 @@ impl<T: CEnum> MaybeInvalid<T> {
     pub fn new(data: T) -> Self {
         Self(data.into_value(), PhantomData)
     }
+
+    pub const fn from_c_int(data: c_int) -> Self {
+        Self(data, PhantomData)
+    }
 }
 
 impl<T: Debug + CEnum> Debug for MaybeInvalid<T> {
@@ -116,7 +120,7 @@ impl<T: Debug + CEnum> Debug for MaybeInvalid<T> {
 /// A trait marking that a type is a C-style enum that can be validated
 ///
 /// # Safety
-/// The imp
+/// TODO
 pub unsafe trait CEnum: NoUninit + TryFrom<c_int, Error = ValidationError<Self>> {
     #[doc(hidden)]
     unsafe fn convert_unchecked(x: c_int) -> Self;
@@ -134,14 +138,15 @@ impl<T> ValidationError<T> {
         Self(x, PhantomData)
     }
 }
-impl<T: Any> Display for ValidationError<T> {
+impl<T> Display for ValidationError<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} is an invalid value for {}", self.0, type_name::<T>())
     }
 }
 
-impl<T: Debug + 'static> std::error::Error for ValidationError<T> {}
+impl<T: Debug> std::error::Error for ValidationError<T> {}
 
+/// Makes a c-style enum
 #[macro_export]
 macro_rules! c_enum {
     {
@@ -164,7 +169,7 @@ macro_rules! c_enum {
             ),*
         }
         impl TryFrom<std::ffi::c_int> for $name {
-            type Error = $crate::ffi_util::ValidationError<Self>;
+            type Error = $crate::ValidationError<Self>;
             fn try_from(x: std::ffi::c_int) -> ::std::result::Result<Self, Self::Error> {
                 #![allow(non_upper_case_globals)]
             $(
@@ -178,7 +183,7 @@ macro_rules! c_enum {
                 })
             }
         }
-        unsafe impl $crate::ffi_util::CEnum for $name {
+        unsafe impl $crate::CEnum for $name {
 
             #[inline(always)]
             #[track_caller]
@@ -211,7 +216,11 @@ pub const fn are_bitwise_equal<T: NoUninit>(x: T, y: T) -> bool {
     unsafe {
         // Don't short-circuit. `Senti` is meant for small primitives
         // and if we short-circuit, LLVM will likely try to do something
-        // stupid... Although for medium T llvm does recognize it as a
+        // stupid...
+        //
+        // The actual results are complicated, but just don't worry about
+        // it. Senti is meant for primitives anyway and the results are the same
+        // for those...
         while i < size_of::<T>() {
             res &= *x == *y;
             x = x.add(1);
